@@ -1,43 +1,48 @@
 import Notiflix from 'notiflix';
-function promiseGenerator() {
-  const formEl = document.querySelector('.form');
 
-  const onFormElSubmit = event => {
-    event.preventDefault();
+const form = document.querySelector('.form');
+const delayEl = document.querySelector('input[name="delay"]');
+const stepEl = document.querySelector('input[name="step"]');
+const amountEl = document.querySelector('input[name="amount"]');
 
-    const { delay, step, amount } = event.target.elements;
+form.addEventListener('submit', handleSubmit);
 
-    for (let i = 1; i <= Number(amount.value); i++) {
-      createPromise(i, Number(delay.value), Number(step.value))
-        .then(({ position, delay }) => {
-          Notiflix.Notify.success(
-            `✅ Fulfilled promise ${position} in ${delay}ms`
-          );
-        })
-        .catch(({ position, delay }) => {
-          Notiflix.Notify.failure(
-            `❌ Rejected promise ${position} in ${delay}ms`
-          );
-        });
-    }
+function handleSubmit(ev) {
+  ev.preventDefault();
 
-    function createPromise(position, delay, step) {
-      const shouldResolve = Math.random() > 0.3;
+  let delay = Number(delayEl.value);
+  let step = Number(stepEl.value);
+  let amount = Number(amountEl.value);
+  let position = 0;
 
-      const myPromise = new Promise((res, rej) => {
-        setTimeout(() => {
-          if (shouldResolve) {
-            res({ position, delay });
-          } else {
-            rej({ position, delay });
-          }
-        }, delay);
+  if (delay < 0 || step < 0 || amount <= 0) {
+    Notiflix.Notify.failure(`Please enter a correct value`);
+  }
+
+  for (let i = 1; i <= amount; i += 1) {
+    position = i;
+    createPromise(position, delay)
+      .then(({ position, delay }) => {
+        Notiflix.Notify.success(`Fulfilled promise ${position} in ${delay}ms`);
+      })
+      .catch(({ position, delay }) => {
+        Notiflix.Notify.failure(`Rejected promise ${position} in ${delay}ms`);
       });
-      return myPromise;
-    }
-  };
-
-  formEl.addEventListener('submit', onFormElSubmit);
+    delay += step;
+  }
+  form.reset();
 }
 
-promiseGenerator();
+function createPromise(position, delay) {
+  return new Promise((resolve, reject) => {
+    const shouldResolve = Math.random() > 0.3;
+
+    setTimeout(() => {
+      if (shouldResolve) {
+        resolve({ position, delay });
+      }
+
+      reject({ position, delay });
+    }, delay);
+  });
+}
